@@ -1,5 +1,5 @@
-use actix_web::{get, App, HttpResponse, HttpServer, web};
 use actix_web::middleware::Logger;
+use actix_web::{get, web, App, HttpResponse, HttpServer};
 use bili::live::get_play_url_info;
 
 use crate::error::ApiError;
@@ -7,7 +7,10 @@ use crate::error::ApiError;
 const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36";
 
 #[get("/{room_id}")]
-pub async fn relay(room_id: web::Path<u64>, client: web::Data<reqwest::Client>) -> Result<HttpResponse, ApiError> {
+pub async fn relay(
+    room_id: web::Path<u64>,
+    client: web::Data<reqwest::Client>,
+) -> Result<HttpResponse, ApiError> {
     let room_id = room_id.into_inner();
     let infos = get_play_url_info(room_id).await?;
     if let Some(play_url) = infos.durl.first() {
@@ -43,13 +46,13 @@ pub async fn spawn_server() -> anyhow::Result<()> {
                         .content_type("application/json")
                         .body(format!(r#"{{"error":"{}"}}"#, err)),
                 )
-                    .into()
+                .into()
             }))
             .wrap(Logger::default())
             .service(relay)
     })
-        .bind(("::", 8080))?
-        .run()
-        .await?;
+    .bind(("::", 8080))?
+    .run()
+    .await?;
     Ok(())
 }

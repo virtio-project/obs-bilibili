@@ -11,7 +11,11 @@ pub async fn relay(room_id: web::Path<u64>, client: web::Data<reqwest::Client>) 
     let room_id = room_id.into_inner();
     let infos = get_play_url_info(room_id).await?;
     if let Some(play_url) = infos.durl.first() {
-        let resp = client.get(&play_url.url).send().await?;
+        let resp = client
+            .get(&play_url.url)
+            .header("Referer", format!("https://live.bilibili.com/{}", room_id))
+            .send()
+            .await?;
         let headers = resp.headers();
         let mut forged = HttpResponse::Ok();
         for header in headers {
